@@ -1,4 +1,5 @@
 #include <genesis.h>
+#include <string.h>
 #include "../res/resources.h"
 
 // CONSTS
@@ -16,6 +17,10 @@ const int PADDLE_HEIGHT = 8;
 
 // FIELDS
 
+int currentScore = 0;
+char labelScore[6] = "SCORE\0";
+char textScore[3] = "0";
+
 Sprite* ball;
 int ballPositionX = 100;
 int ballPositionY = 100;
@@ -28,8 +33,23 @@ Sprite* paddle;
 int paddlePositionX = 144;
 int paddleVelocityX = 0;
 
-
 // HELPER FUNCTIONS
+
+// retorna o sinal de um numero
+int sign (int x)
+{
+    return (x > 0) - (x < 0);
+}
+
+void updateScoreDisplay ()
+{
+    // Formata a string para receber um valor numerico
+    sprintf (textScore, "%d", currentScore);
+
+    // Limpa o texto e desenha de novo
+    VDP_clearText (1, 2, 3);
+    VDP_drawText (textScore, 1, 2);
+}
 
 void moveBall ()
 {
@@ -65,6 +85,17 @@ void moveBall ()
             // Inverte a velocidade
             ballPositionY = PADDLE_POSITION_Y - ballHeight - 1;
             ballVelocityY *= -1;
+
+            // Atualiza pontuacao
+            currentScore++;
+            updateScoreDisplay ();
+
+            // Aumenta velocidade a cada 10 colisoes
+            if (currentScore % 10 == 0)
+            {
+                ballVelocityX += sign (ballVelocityX);
+                ballVelocityY += sign (ballVelocityY);
+            }
         }
     }
 
@@ -160,6 +191,11 @@ int main ()
     // TILE_ATRR = atributos do sprite, necessario para setar a paleta
     ball = SPR_addSprite (&ballSprite, 100, 100, TILE_ATTR (PAL1, 0, FALSE, FALSE));
     paddle = SPR_addSprite (&paddleSprite, paddlePositionX, PADDLE_POSITION_Y, TILE_ATTR (PAL1, 0, FALSE, FALSE));
+
+    // Desenha a HUD de score
+    VDP_setTextPlan (PLAN_A);
+    VDP_drawText (labelScore, 1, 1);
+    updateScoreDisplay ();
 
     // Loop do jogo
     while (1)
