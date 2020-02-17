@@ -9,6 +9,11 @@ const int RIGHT_EDGE = 320;
 const int TOP_EDGE = 0;
 const int BOTTOM_EDGE = 224;
 
+// Paddle / Player
+const int PADDLE_POSITION_Y = 200;
+const int PADDLE_WIDTH = 32;
+const int PADDLE_HEIGHT = 8;
+
 // FIELDS
 
 Sprite* ball;
@@ -18,6 +23,11 @@ int ballVelocityX = 1;
 int ballVelocityY = 1;
 int ballWidth = 8;
 int ballHeight = 8;
+
+Sprite* paddle;
+int paddlePositionX = 144;
+int paddleVelocityX = 0;
+
 
 // HELPER FUNCTIONS
 
@@ -54,11 +64,60 @@ void moveBall ()
     SPR_setPosition (ball, ballPositionX, ballPositionY);
 }
 
+void inputHandler (u16 joystick, u16 wasChanged, u16 wasPressed)
+{
+    if (joystick == JOY_1)
+    {
+        if (wasPressed & BUTTON_RIGHT)
+        {
+            // direita
+            paddleVelocityX = 3;
+        }
+        else if (wasPressed & BUTTON_LEFT)
+        {
+            // esquerda
+            paddleVelocityX = -3;
+        }
+        else 
+        {
+            // quando solta
+            if ((wasChanged & BUTTON_RIGHT) | (wasChanged & BUTTON_LEFT))
+            {
+                paddleVelocityX = 0;
+            }
+        }
+    }
+}
+
+void movePaddle ()
+{
+    paddlePositionX += paddleVelocityX;
+
+    // Verifica limites horizontais
+    if (paddlePositionX < LEFT_EDGE)
+    {
+        paddlePositionX = LEFT_EDGE;
+    }
+
+    if (paddlePositionX + PADDLE_WIDTH > RIGHT_EDGE)
+    {
+        paddlePositionX = RIGHT_EDGE - PADDLE_WIDTH;
+    }
+
+    // Define nova posicao
+    SPR_setPosition (paddle, paddlePositionX, PADDLE_POSITION_Y);
+}
+
 
 // MAIN
 
 int main ()
 {
+    // Inicializa sub sistema de Joystick
+    // Define handler de input
+    JOY_init ();
+    JOY_setEventHandler (&inputHandler);
+
     // Carrega um tileset baseado na imagem importada
     // 1 = posicao do tile na VRAM
     VDP_loadTileSet (bgtile.tileset, 1, DMA);
@@ -89,15 +148,16 @@ int main ()
     // x, y = coordenadas do sprite em pixels
     // TILE_ATRR = atributos do sprite, necessario para setar a paleta
     ball = SPR_addSprite (&ballSprite, 100, 100, TILE_ATTR (PAL1, 0, FALSE, FALSE));
-
+    paddle = SPR_addSprite (&paddleSprite, paddlePositionX, PADDLE_POSITION_Y, TILE_ATTR (PAL1, 0, FALSE, FALSE));
 
     // Loop do jogo
     while (1)
     {
+        moveBall ();
+        movePaddle ();
+
         // Exibe lista atual de sprites
         SPR_update ();
-
-        moveBall ();
 
         // Espera atualizacao da tela
         VDP_waitVSync ();
