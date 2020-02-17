@@ -21,6 +21,10 @@ int currentScore = 0;
 char labelScore[6] = "SCORE\0";
 char textScore[3] = "0";
 
+bool isGameOn = FALSE;
+char startMessage[22] = "PRESS START TO BEGIN!\0";
+char resetMessage[37] = "GAME OVER! PRESS START TO PLAY AGAIN!";
+
 Sprite* ball;
 int ballPositionX = 100;
 int ballPositionY = 100;
@@ -51,6 +55,34 @@ void updateScoreDisplay ()
     VDP_drawText (textScore, 1, 2);
 }
 
+void showText (char text[])
+{
+    int x = (20 - strlen (text) / 2);
+    VDP_drawText (text, x, 15);
+}
+
+void gameOver ()
+{
+    showText (resetMessage);
+    isGameOn = FALSE;
+}
+
+void startGame ()
+{
+    currentScore = 0;
+    updateScoreDisplay ();
+
+    ballPositionX = ballPositionY = 0;
+    ballVelocityX = ballVelocityY = 1;
+
+    paddlePositionX = 144;
+
+    // Limpa uma area especifica de texto
+    VDP_clearTextArea (0, 10, 40, 10);
+
+    isGameOn = TRUE;
+}
+
 void moveBall ()
 {
     // Verifica limites horizontais
@@ -73,8 +105,7 @@ void moveBall ()
     }
     else if (ballPositionY + ballHeight > BOTTOM_EDGE)
     {
-        ballPositionY = BOTTOM_EDGE - ballHeight;
-        ballVelocityY *= -1;
+        gameOver ();
     }
 
     // Verifica colisoes horizontais e verticais
@@ -110,6 +141,15 @@ void inputHandler (u16 joystick, u16 wasChanged, u16 wasPressed)
 {
     if (joystick == JOY_1)
     {
+        // Start pressionado
+        if (wasPressed & BUTTON_START)
+        {
+            if (!isGameOn)
+            {
+                startGame ();
+            }
+        }
+
         if (wasPressed & BUTTON_RIGHT)
         {
             // direita
@@ -197,11 +237,16 @@ int main ()
     VDP_drawText (labelScore, 1, 1);
     updateScoreDisplay ();
 
+    showText (startMessage);
+
     // Loop do jogo
     while (1)
     {
-        moveBall ();
-        movePaddle ();
+        if (isGameOn == TRUE)
+        {
+            moveBall ();
+            movePaddle ();
+        }
 
         // Exibe lista atual de sprites
         SPR_update ();
