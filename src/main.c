@@ -49,12 +49,23 @@ void moveBall ()
     if (ballPositionY < TOP_EDGE)
     {
         ballPositionY = TOP_EDGE;
-        ballVelocityY = - ballVelocityY;
+        ballVelocityY *= -1;
     }
     else if (ballPositionY + ballHeight > BOTTOM_EDGE)
     {
         ballPositionY = BOTTOM_EDGE - ballHeight;
-        ballVelocityY = - ballVelocityY;
+        ballVelocityY *= -1;
+    }
+
+    // Verifica colisoes horizontais e verticais
+    if (ballPositionX < (paddlePositionX + PADDLE_WIDTH) && (ballPositionX + ballWidth) > paddlePositionX)
+    {
+        if (ballPositionY < (PADDLE_POSITION_Y + PADDLE_HEIGHT) && (ballPositionY + ballHeight) >= PADDLE_POSITION_Y)
+        {
+            // Inverte a velocidade
+            ballPositionY = PADDLE_POSITION_Y - ballHeight - 1;
+            ballVelocityY *= -1;
+        }
     }
 
     ballPositionX += ballVelocityX;
